@@ -12,24 +12,21 @@ namespace TwitchCommentReader
     {
         AutomationElement unaWindowElement;
         AutomationElement playButtonElement;
+        InvokePattern playButtonInvoker;
 
         IntPtr messageBoxHandle;
-        IntPtr playButtonHandle;
 
         ConcurrentQueue<string> playMessageQueue = new ConcurrentQueue<string>();
 
         // RichEdit にテキストを流し込むには SendMessage しかない
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, string lParam);
-        [DllImport("user32.dll")]
-        static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         const uint WM_SETTEXT = 0x000C;
-        const uint BM_CLICK = 0x00F5;
 
         bool IsPlaying => playButtonElement.Current.Name.Contains("一時停止");
         void SetMessageToBox(string message) => SendMessage(messageBoxHandle, WM_SETTEXT, IntPtr.Zero, message);
-        void ClickPlayButton() => SendMessage(playButtonHandle, BM_CLICK, IntPtr.Zero, IntPtr.Zero);
+        void ClickPlayButton() => playButtonInvoker.Invoke();
 
         public Una()
         {
@@ -76,7 +73,7 @@ namespace TwitchCommentReader
                     else if (childInfo.AutomationId == "btnPlay")
                     {
                         playButtonElement = childElement;
-                        playButtonHandle = new IntPtr(childInfo.NativeWindowHandle);
+                        playButtonInvoker = (InvokePattern)playButtonElement.GetCurrentPattern(InvokePattern.Pattern);
                     }
                 }
                 catch
